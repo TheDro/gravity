@@ -113,13 +113,31 @@ export default {
     function iterate(nIterations, timeout) {
       if (!state.running) return
       let duplicateBodies
+      // for (let i=0; i<state.nSteps; i++) {
+      //   duplicateBodies = _.cloneDeep(state.bodies)
+      //   advance(duplicateBodies, state.dt/state.nSteps/2)
+      //   advance(duplicateBodies, state.dt/state.nSteps/2)
+      //   addToHistories(duplicateBodies, state.histories2)
+      //
+      //   advance(state.bodies, state.dt/state.nSteps)
+      //   addToHistories(state.bodies, state.histories)
+      // }
+
+
       for (let i=0; i<state.nSteps; i++) {
+        let A = abs(state.bodies[2].a)
+        let oldDt = state.dt/state.nSteps
+        let dt = Math.min(5*oldDt, Math.max(oldDt/5,
+          oldDt/(A*100)**1))
+        // console.log(`${oldDt} -> ${dt}`)
+        // dt = oldDt
+
         duplicateBodies = _.cloneDeep(state.bodies)
-        advance(duplicateBodies, state.dt/state.nSteps/2)
-        advance(duplicateBodies, state.dt/state.nSteps/2)
+        advance(duplicateBodies, dt/2)
+        advance(duplicateBodies, dt/2)
         addToHistories(duplicateBodies, state.histories2)
 
-        advance(state.bodies, state.dt/state.nSteps)
+        advance(state.bodies, dt)
         addToHistories(state.bodies, state.histories)
       }
 
@@ -137,10 +155,10 @@ export default {
           if (otherBody.id === body.id || otherBody.mass === 0) {
             return
           }
-          let move = otherBody.id > body.id //TODO: depend on index instead of id
+          let move = otherBody.id > body.id ? 0.5 : -0.5 //TODO: depend on index instead of id
           let r = [
-            (otherBody.position[0]+move*0.5*otherBody.v[0]*dt)-(body.position[0]+0.5*body.v[0]*dt),
-            (otherBody.position[1]+move*0.5*otherBody.v[1]*dt)-(body.position[1]+0.5*body.v[1]*dt)
+            (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+0.5*body.v[0]*dt),
+            (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+0.5*body.v[1]*dt)
           ]
           let R = abs(r)
           let A = G * otherBody.mass / R**2
@@ -153,6 +171,89 @@ export default {
         body.v[0] += a[0]*dt
         body.v[1] += a[1]*dt
         body.a = a
+
+        // let a1 = [0,0]
+        // bodies.forEach((otherBody) => {
+        //   if (otherBody.id === body.id || otherBody.mass === 0) {
+        //     return
+        //   }
+        //   let move = otherBody.id > body.id ? 0 : -1 //TODO: depend on index instead of id
+        //   let r = [
+        //     (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+0.0*body.v[0]*dt),
+        //     (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+0.0*body.v[1]*dt)
+        //   ]
+        //   let R = abs(r)
+        //   let A = G * otherBody.mass / R**2
+        //   a1[0] += A*r[0]/R
+        //   a1[1] += A*r[1]/R
+        // })
+        //
+        // let a2 = [0,0]
+        // bodies.forEach((otherBody) => {
+        //   if (otherBody.id === body.id || otherBody.mass === 0) {
+        //     return
+        //   }
+        //   let move = otherBody.id > body.id ? 1 : 0//TODO: depend on index instead of id
+        //   let r = [
+        //     (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+1*body.v[0]*dt),
+        //     (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+1*body.v[1]*dt)
+        //   ]
+        //   let R = abs(r)
+        //   let A = G * otherBody.mass / R**2
+        //   a2[0] += A*r[0]/R
+        //   a2[1] += A*r[1]/R
+        // })
+        //
+        // let a = [(a1[0]+a2[0])/2, (a1[1]+a2[1])/2]
+        //
+        // body.position[0] += body.v[0]*dt + 0.5*a1[0]*dt**2
+        // body.position[1] += body.v[1]*dt + 0.5*a1[1]*dt**2
+        // body.v[0] += a[0]*dt
+        // body.v[1] += a[1]*dt
+        // body.a = a
+
+
+
+        // let a1 = [0,0]
+        // bodies.forEach((otherBody) => {
+        //   if (otherBody.id === body.id || otherBody.mass === 0) {
+        //     return
+        //   }
+        //   let move = otherBody.id > body.id ? 0 : -1 //TODO: depend on index instead of id
+        //   let r = [
+        //     (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+0.0*body.v[0]*dt),
+        //     (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+0.0*body.v[1]*dt)
+        //   ]
+        //   let R = abs(r)
+        //   let A = G * otherBody.mass / R**2
+        //   a1[0] += A*r[0]/R
+        //   a1[1] += A*r[1]/R
+        // })
+        //
+        // let a = [0,0]
+        // bodies.forEach((otherBody) => {
+        //   if (otherBody.id === body.id || otherBody.mass === 0) {
+        //     return
+        //   }
+        //   let move = otherBody.id > body.id ? 0.5 : -0.5 //TODO: depend on index instead of id
+        //   let r = [
+        //     (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+0.5*body.v[0]*dt + state.tweak*0.5*a1[0]*dt**2/4),
+        //     (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+0.5*body.v[1]*dt + state.tweak*0.5*a1[0]*dt**2/4)
+        //   ]
+        //   let R = abs(r)
+        //   let A = G * otherBody.mass / R**2
+        //   a[0] += A*r[0]/R
+        //   a[1] += A*r[1]/R
+        // })
+        //
+        // body.position[0] += body.v[0]*dt + 0.5*a[0]*dt**2
+        // body.position[1] += body.v[1]*dt + 0.5*a[1]*dt**2
+        // body.v[0] += a[0]*dt
+        // body.v[1] += a[1]*dt
+        // body.a = a
+
+
+
       })
     }
 
