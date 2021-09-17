@@ -3,16 +3,16 @@
     <button @click="toggle()">{{state.running ? 'Stop' : 'Start'}}</button>
     <button @click="reset()">Reset</button>
   </div>
-  <svg width="600" height="600">
-    <g :transform="`scale(1 -1) translate(0 -600)`">
-      <g v-for="history in state.histories">
-        <path :d="formatPathD(history.position, state.running ? 300 : 10000)" stroke-width="1" stroke="#333" fill="none"/>
+  <svg width="600" height="600" class="shadow">
+    <g :transform="`scale(1 -1) translate(300 -300)`">
+      <g v-for="path in state.paths">
+        <path :d="path" stroke-width="1" stroke="#333" fill="none"/>
       </g>
       <g v-for="body in state.bodies">
 
         <circle :r="body.radius"
-                :cx="body.position[0] + state.center[0]"
-                :cy="body.position[1] + state.center[1]"
+                :cx="body.position[0]"
+                :cy="body.position[1]"
                 fill="orange">
         </circle>
       </g>
@@ -33,7 +33,7 @@ function abs(vector) {
   return Math.sqrt(vector[0]**2 + vector[1]**2)
 }
 
-let G = 20
+let G = 100
 
 
 export default {
@@ -51,10 +51,16 @@ export default {
     let state = reactive({
       bodies: [],
       histories: [],
+      paths: [],
       histories2: [],
-      center: [300, 300],
       running: false,
       logError: false,
+    })
+
+    watchEffect(() => {
+      state.paths = state.histories.map((history) => {
+        return formatPathD(history.position, state.running ? 300 : 10000)
+      })
     })
 
     watchEffect(() => {
@@ -169,12 +175,13 @@ export default {
     }
 
     function formatPathD(array, last=10000) {
+      console.log('formatPathD')
       if (array.length < 1) return
       let i = Math.max(array.length - last, 0)
-      let result = `M ${array[i][0]+state.center[0]} ${array[i][1]+state.center[1]}`
+      let result = `M ${array[i][0]} ${array[i][1]}`
       i++
       for (; i<array.length; i++) {
-        result += ` L ${array[i][0]+state.center[0]} ${array[i][1]+state.center[1]}`
+        result += ` L ${array[i][0]} ${array[i][1]}`
       }
       return result
     }
