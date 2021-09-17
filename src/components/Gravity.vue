@@ -74,14 +74,6 @@ export default {
       fixed: true,
     },{
       id: nextId(),
-      mass: 0,
-      position: [0, 0],
-      v: [0,0],
-      a: [0,0],
-      radius: 10,
-      fixed: true,
-    },{
-      id: nextId(),
       mass: 0.02,
       position: [0, -100],
       v: [-1, 0],
@@ -96,6 +88,14 @@ export default {
       a: [0, 0],
       radius: 5,
       fixed: false,
+    },{
+        id: nextId(),
+        mass: 0,
+        position: [0, 0],
+        v: [0,0],
+        a: [0,0],
+        radius: 10,
+        fixed: true,
     }]
 
     let state = reactive({
