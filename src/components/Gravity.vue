@@ -17,6 +17,8 @@
          class="card"
          v-for="body in state.bodies">
 
+
+
       <label>mass</label>
       <input type="number" v-model.number="body.mass" step="any"/>
 
@@ -44,6 +46,15 @@
 
       <label>fixed</label>
       <input type="checkbox" style="margin: 0.5rem" v-model="body.fixed" />
+
+      <div class="flex-row">
+        <div style="flex-grow: 1"></div>
+        <button @click="removeBody(body)">remove</button>
+      </div>
+    </div>
+
+    <div style="display: inline-block; vertical-align: top; padding-top: 1rem;">
+      <button @click="addBody()">Add</button>
     </div>
   </div>
 
@@ -154,7 +165,24 @@ export default {
       }
     }
 
+    let defaultBody = {
+      id: null,
+      mass: 0,
+      position: [0, 220],
+      v: [0.5, 0],
+      a: [0, 0],
+      radius: 5,
+      fixed: false,
+    }
+    function addBody() {
+      let body = _.cloneDeep(defaultBody)
+      body.id = nextId()
+      state.bodies.push(body)
+    }
 
+    function removeBody(body) {
+      _.remove(state.bodies, body)
+    }
 
     function exportBodies() {
       let copiedState = _.cloneDeep(state)
@@ -162,7 +190,7 @@ export default {
       copyToClipboard(window.href)
     }
 
-    return {state, exportBodies}
+    return {state, addBody, exportBodies, removeBody}
   }
 }
 
@@ -181,6 +209,7 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
+  /*display: inline-flex;*/
 }
 
 .card {
