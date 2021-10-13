@@ -9,6 +9,7 @@
       <label>Subdivisions</label>
       <input type="number" v-model.number="state.nSteps" step="any"/>
     </div>
+    <button @click="exportBodies()">Export</button>
   </div>
 
   <div class="scrolling-wrapper">
@@ -53,10 +54,12 @@
 <script>
 import {reactive} from 'vue'
 import _ from 'lodash'
+import json5 from 'json5'
 import {nextId} from "../id_helper";
 import Simulator from "./Simulator.vue";
+import {copyToClipboard, setUrlParam, getUrlParam} from "../export_helper";
 
-
+window.json5 = json5
 
 export default {
   components: {
@@ -75,28 +78,22 @@ export default {
     },{
       id: nextId(),
       mass: 0.02,
-      position: [0, -100],
-      v: [-1, 0],
-      a: [0, 0],
-      radius: 5,
-      fixed: false,
-    },{
-      id: nextId(),
-      mass: 0.02,
       position: [0, 100],
       v: [1, 0],
       a: [0, 0],
       radius: 5,
       fixed: false,
     },{
-        id: nextId(),
-        mass: 0,
-        position: [0, 0],
-        v: [0,0],
-        a: [0,0],
-        radius: 10,
-        fixed: true,
+      id: nextId(),
+      mass: 0.001,
+      position: [0, 250],
+      v: [0.6, 0],
+      a: [0, 0],
+      radius: 3,
+      fixed: false,
     }]
+
+
 
     let state = reactive({
       bodies: defaultBodies,
@@ -104,9 +101,68 @@ export default {
       nSteps: 10,
     })
 
+    load()
+
+    function load() {
+      let urlState = getUrlParam('state')
+      if (urlState === null) return
+
+      let validState = {}
+      let isValid = true
+
+      try {
+        validState.dt = validFloat(urlState.dt, state.dt)
+        validState.nSteps = validInt(urlState.nSteps, state.nSteps)
+        validState.bodies = urlState.bodies.map((body) => validBody(body))
+      } catch {
+        isValid = false
+      }
+
+      if (isValid) {
+        Object.assign(state, validState)
+      } else {
+        console.error('state from URL was invalid')
+        setUrlParam('state', null)
+      }
+    }
+
+    function validFloat(input, defaultValue) {
+      let isValid = (typeof input === 'number')
+      if (!isValid && defaultValue === undefined) {
+        throw `${input} is not a valid float`
+      }
+      return isValid ? input : defaultValue
+    }
+
+    function validInt(input, defaultValue) {
+      let isValid = (typeof input === 'number')
+      if (!isValid && defaultValue === undefined) {
+        throw `${input} is not a valid integer`
+      }
+      return isValid ? Math.round(input) : defaultValue
+    }
+
+    function validBody(body) {
+      return {
+        id: nextId(),
+        mass: validFloat(body.mass, 0),
+        position: [validFloat(body.position[0]), validFloat(body.position[1])],
+        v:  [validFloat(body.v[0]), validFloat(body.v[1])],
+        a: [0, 0],
+        radius: validFloat(body.radius, 5),
+        fixed: body.fixed || false,
+      }
+    }
 
 
-    return {state}
+
+    function exportBodies() {
+      let copiedState = _.cloneDeep(state)
+      setUrlParam('state', copiedState)
+      copyToClipboard(window.href)
+    }
+
+    return {state, exportBodies}
   }
 }
 

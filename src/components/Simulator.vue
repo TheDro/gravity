@@ -175,7 +175,6 @@ export default {
     }
 
     function formatPathD(array, last=10000) {
-      console.log('formatPathD')
       if (array.length < 1) return
       let i = Math.max(array.length - last, 0)
       let result = `M ${array[i][0]} ${array[i][1]}`
