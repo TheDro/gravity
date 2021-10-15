@@ -28,13 +28,9 @@ import _ from 'lodash'
 import {nextId} from "../id_helper";
 import Plot from './Plot.vue'
 import {Clock} from '../time_helper'
-
-function abs(vector) {
-  return Math.sqrt(vector[0]**2 + vector[1]**2)
-}
+import {add, subtract, mult, unit, mag} from '../math_helper'
 
 let G = 100
-
 
 export default {
   props: {
@@ -74,7 +70,6 @@ export default {
 
     function addToHistories(bodies, histories = state.histories) {
       bodies.forEach((body) => {
-        // debugger
         body = _.cloneDeep(body)
         let history = _.find(histories, {id: body.id})
         if (!history) {
@@ -93,7 +88,7 @@ export default {
 
       clock.tik()
       for (let i=0; i<props.nSteps; i++) {
-        let A = abs(state.bodies[2].a)
+        let A = mag(state.bodies[2].a)
         let oldDt = props.dt/props.nSteps
         let dt = Math.min(5*oldDt, Math.max(oldDt/5,
             oldDt/(A*100)**1))
@@ -127,22 +122,19 @@ export default {
             return
           }
           let move = otherBody.id > body.id ? 0.5 : -0.5 //TODO: depend on index instead of id
-          let r = [
-            (otherBody.position[0]+move*otherBody.v[0]*dt)-(body.position[0]+0.5*body.v[0]*dt),
-            (otherBody.position[1]+move*otherBody.v[1]*dt)-(body.position[1]+0.5*body.v[1]*dt)
-          ]
-          let R = abs(r)
+          let r = subtract(
+              add(otherBody.position, mult(move*dt, otherBody.v)),
+              add(body.position, mult(0.5*dt, body.v))
+          )
+
+          let R = mag(r)
           let A = G * otherBody.mass / R**2
-          a[0] += A*r[0]/R
-          a[1] += A*r[1]/R
+          a = add(a, mult(A, unit(r)))
         })
 
-        body.position[0] += body.v[0]*dt + 0.5*a[0]*dt**2
-        body.position[1] += body.v[1]*dt + 0.5*a[1]*dt**2
-        body.v[0] += a[0]*dt
-        body.v[1] += a[1]*dt
+        body.position = add(body.position, add( mult(body.v, dt), mult(a, 0.5*dt**2)))
+        body.v = add(body.v, mult(dt, a))
         body.a = a
-
       })
     }
 
@@ -160,8 +152,8 @@ export default {
           let a2 = state.histories2[2].a[i]
 
           let a = state.histories[2][i]
-          delta.R.push(abs([position1[0]-position2[0], position1[1]-position2[1]]))
-          delta.A.push(abs(a2))
+          delta.R.push(mag([position1[0]-position2[0], position1[1]-position2[1]]))
+          delta.A.push(mag(a2))
         }
         window.delta = delta
         window.plot(delta.A, delta.R)
