@@ -3,21 +3,16 @@
     <button @click="toggle()">{{state.running ? 'Stop' : 'Start'}}</button>
     <button @click="reset()">Reset</button>
   </div>
-  <svg width="600" height="600" class="shadow">
-    <g :transform="`scale(1 -1) translate(300 -300)`">
-      <g v-for="path in state.paths">
-        <path :d="path" stroke-width="1" stroke="#333" fill="none"/>
-      </g>
-      <g v-for="body in state.bodies">
-
-        <circle :r="body.radius"
-                :cx="body.position[0]"
-                :cy="body.position[1]"
-                fill="orange">
-        </circle>
-      </g>
-    </g>
-  </svg>
+  <StarMap
+      :bodies="state.bodies"
+      :histories="state.histories"
+      :last="state.running ? 200 : 10000"
+      :relative="false" />
+  <StarMap
+      :bodies="state.bodies"
+      :histories="state.histories"
+      :last="state.running ? 200 : 10000"
+      :relative="true" />
   <Plot/>
 </template>
 
@@ -25,12 +20,13 @@
 <script>
 import {reactive, watchEffect} from 'vue'
 import _ from 'lodash'
-import {nextId} from "../id_helper";
 import Plot from './Plot.vue'
+import StarMap from "./StarMap.vue";
 import {Clock} from '../time_helper'
 import {add, subtract, mult, unit, mag} from '../math_helper'
 
 let G = 100
+let FPS = 60
 
 export default {
   props: {
@@ -39,24 +35,16 @@ export default {
     nSteps: Number,
   },
   components: {
-    Plot
+    Plot, StarMap
   },
   setup(props) {
-
 
     let state = reactive({
       bodies: [],
       histories: [],
-      paths: [],
       histories2: [],
       running: false,
       logError: false,
-    })
-
-    watchEffect(() => {
-      state.paths = state.histories.map((history) => {
-        return formatPathD(history.position, state.running ? 300 : 10000)
-      })
     })
 
     watchEffect(() => {
@@ -88,11 +76,11 @@ export default {
 
       clock.tik()
       for (let i=0; i<props.nSteps; i++) {
-        let A = mag(state.bodies[2].a)
+        // let A = mag(state.bodies[2].a)
         let oldDt = props.dt/props.nSteps
-        let dt = Math.min(5*oldDt, Math.max(oldDt/5,
-            oldDt/(A*100)**1))
-        dt = oldDt
+        // let dt = Math.min(5*oldDt, Math.max(oldDt/5,
+        //     oldDt/(A*100)**1))
+        let dt = oldDt
 
         if (state.logError) {
           duplicateBodies = _.cloneDeep(state.bodies)
@@ -102,7 +90,7 @@ export default {
         }
 
         advance(state.bodies, dt)
-        if (i%4 === 0) {
+        if (i%(Math.ceil(props.nSteps/2)) === 0) {
           addToHistories(state.bodies, state.histories)
         }
       }
@@ -141,7 +129,7 @@ export default {
     function toggle() {
       state.running = !state.running
       if (state.running) {
-        iterate(1000, 1000/60)
+        iterate(1000, 1000/FPS)
       } else if (state.logError) {
         let delta = {R: [], A: []}
         for (let i=0; i<state.histories2[2].position.length; i++) {
@@ -166,18 +154,7 @@ export default {
       state.histories2 = []
     }
 
-    function formatPathD(array, last=10000) {
-      if (array.length < 1) return
-      let i = Math.max(array.length - last, 0)
-      let result = `M ${array[i][0]} ${array[i][1]}`
-      i++
-      for (; i<array.length; i++) {
-        result += ` L ${array[i][0]} ${array[i][1]}`
-      }
-      return result
-    }
-
-    return {state, toggle, reset, formatPathD}
+    return {state, toggle, reset}
   }
 }
 

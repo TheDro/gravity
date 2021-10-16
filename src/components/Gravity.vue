@@ -18,7 +18,6 @@
          v-for="body in state.bodies">
 
 
-
       <label>mass</label>
       <input type="number" v-model.number="body.mass" step="any"/>
 
@@ -46,6 +45,9 @@
 
       <label>fixed</label>
       <input type="checkbox" style="margin: 0.5rem" v-model="body.fixed" />
+
+      <label>center</label>
+      <input type="checkbox" style="margin: 0.5rem" v-model="body.center" @change="changeCenter(body)" />
 
       <div class="flex-row">
         <div style="flex-grow: 1"></div>
@@ -86,6 +88,7 @@ export default {
       a: [0,0],
       radius: 10,
       fixed: true,
+      center: false,
     },{
       id: nextId(),
       mass: 0.02,
@@ -94,6 +97,7 @@ export default {
       a: [0, 0],
       radius: 5,
       fixed: false,
+      center: false,
     },{
       id: nextId(),
       mass: 0.001,
@@ -102,6 +106,7 @@ export default {
       a: [0, 0],
       radius: 3,
       fixed: false,
+      center: false,
     }]
 
 
@@ -162,6 +167,7 @@ export default {
         a: [0, 0],
         radius: validFloat(body.radius, 5),
         fixed: body.fixed || false,
+        center: body.center || false,
       }
     }
 
@@ -173,6 +179,7 @@ export default {
       a: [0, 0],
       radius: 5,
       fixed: false,
+      center: false,
     }
     function addBody() {
       let body = _.cloneDeep(defaultBody)
@@ -190,7 +197,16 @@ export default {
       copyToClipboard(window.href)
     }
 
-    return {state, addBody, exportBodies, removeBody}
+    function changeCenter(currentBody) {
+      if (currentBody.center) {
+        state.bodies.forEach((body) => {
+          if (body.id === currentBody.id) return
+          body.center = false
+        })
+      }
+    }
+
+    return {state, addBody, exportBodies, removeBody, changeCenter}
   }
 }
 
